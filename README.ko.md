@@ -57,7 +57,7 @@ Terminas 서버 (server/: Node.js · Fastify · SQLite)
 
 ## 앱 받기
 
-1. [GitHub Releases](https://github.com/Studio-Yeonhong/Terminas/releases)에서 Windows 설치 파일(`Terminas-Setup-x.y.z.exe`)을 받는다. 지금은 **공개 베타**(1.0.0-beta)이고, 베타 버전으로 설치한 앱은 베타 업데이트를 계속 받는다.
+1. [GitHub Releases](https://github.com/Studio-Yeonhong/Terminas/releases)에서 Windows 설치 파일(`Terminas-Setup-x.y.z.exe`)을 받는다.
 2. 실행한다. 설치 파일에는 아직 Windows 코드 서명이 없어서 처음 실행할 때 SmartScreen 경고가 뜰 수 있다(**추가 정보 → 실행**). 업데이트의 진위는 프로젝트 자체 서명으로 따로 확인한다.
 3. 앱은 스스로 업데이트한다. 켜고 잠시 뒤와 그 뒤 4시간마다 확인하고, 새 버전을 뒤에서 받아 두었다가 **x.y.z 로 업데이트** 버튼을 띄운다. 눌러서 확인하기 전에는 설치하지 않는다. 새 기능을 먼저 써 보려면 **설정 → 계정 → 베타 버전 받기** 를 켠다(베타는 불안정할 수 있다).
 

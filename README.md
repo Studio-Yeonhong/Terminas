@@ -57,7 +57,7 @@ Read the full design, including known limitations, in [docs/security-model.md](d
 
 ## Getting the app
 
-1. Download the Windows installer (`Terminas-Setup-x.y.z.exe`) from [GitHub Releases](https://github.com/Studio-Yeonhong/Terminas/releases). Terminas is currently in **public beta** (1.0.0-beta); an app installed from a beta version keeps receiving beta updates.
+1. Download the Windows installer (`Terminas-Setup-x.y.z.exe`) from [GitHub Releases](https://github.com/Studio-Yeonhong/Terminas/releases).
 2. Run it. The installer is not Windows code-signed yet, so SmartScreen may warn on first run (**More info → Run anyway**). Updates are verified separately with the project's own signature.
 3. The app updates itself: it checks shortly after start and every 4 hours, downloads new versions in the background and offers an **Update to x.y.z** button. Nothing is installed until you click it and confirm. To try features early, turn on **Settings → Account → Get beta versions** (betas may be unstable).
 
