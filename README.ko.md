@@ -6,6 +6,16 @@
 
 [English README](README.md)
 
+## 화면
+
+| 호스트 | 터미널 |
+|---|---|
+| ![호스트](docs/images/ko-hosts.png) | ![터미널](docs/images/ko-terminal.png) |
+| **SFTP** | **HTTP 요청** |
+| ![SFTP](docs/images/ko-sftp.png) | ![HTTP 요청](docs/images/ko-http.png) |
+
+화면의 데이터는 예시다.
+
 ## 구조
 
 ```

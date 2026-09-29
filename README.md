@@ -6,6 +6,16 @@ Vault contents are encrypted on your device before they reach the server, so the
 
 [한국어 README](README.ko.md)
 
+## Screenshots
+
+| Hosts | Terminal |
+|---|---|
+| ![Hosts](docs/images/en-hosts.png) | ![Terminal](docs/images/en-terminal.png) |
+| **SFTP** | **HTTP requests** |
+| ![SFTP](docs/images/en-sftp.png) | ![HTTP requests](docs/images/en-http.png) |
+
+Screenshots use example data.
+
 ## Architecture
 
 ```

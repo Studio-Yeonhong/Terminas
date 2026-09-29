@@ -191,7 +191,7 @@ Raise `ITEM_FORMAT` and extend `formatNeeded()` whenever a new value would be lo
 Versions with a pre-release tag (`0.4.0-beta.1`) are beta versions. The desktop app offers **Settings → Account → Desktop app → Get beta versions** (with a stability warning). Beta users read a separate feed: `betaUpdateUrl` in `desktop/app-config.json` (the fixed GitHub release tagged `beta`). Stable users never see beta files, because GitHub's `releases/latest` skips pre-releases. An app installed from a beta version starts on the beta channel until the person chooses otherwise.
 
 - `npm run release:sign` only signs the build. With `--to <folder>` or `TERMINAS_UPDATES_DIR` it also copies the files into a server's `/updates` folder (a beta version only into `<updates>/beta`, a stable version into `<updates>` and, when it is newer than the beta there, into `<updates>/beta` too) — for self-hosted feeds; the official app is published on GitHub only.
-- `internal/github-publish.mjs release` marks beta versions as pre-releases and keeps the `beta` release's files at the newest beta or newer stable version.
+- On GitHub, beta versions are published as pre-releases, and the release tagged `beta` always holds the newest beta (or a newer stable version) — that release is the beta feed.
 - The signature check is the same for both channels. Version order follows semver (`0.4.0-beta.1 < 0.4.0-beta.2 < 0.4.0`), and the app never installs an older version, so leaving the beta keeps the current beta until the next stable release is newer.
 - Builds use `"detectUpdateChannel": false`, so beta builds also produce `latest.yml`; the channel is decided by where the files are published.
 
