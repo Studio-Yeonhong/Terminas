@@ -1,0 +1,32 @@
+# Terminas server. Put an HTTPS reverse proxy (Caddy, nginx, Traefik, a Cloudflare tunnel...) in front of it:
+# the web UI needs https (browser crypto), and sign-in details should never travel in plain text.
+# WebSocket upgrades on /api/relay must be passed through (web SSH).
+#
+#   cp .env.example .env    # set SHELL_PUBLIC_URL=https://your.domain and a sign-in method
+#   docker compose up -d
+services:
+  terminas:
+    build: .
+    image: terminas-server:latest
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      SHELL_HOST: 0.0.0.0
+      SHELL_PORT: 5280
+      SHELL_DATA_DIR: /data
+      SHELL_TRUST_PROXY: 1
+      # admin console: listens inside the container, published only on this machine's 127.0.0.1 (see below)
+      SHELL_CONSOLE_HOST: 0.0.0.0
+      SHELL_CONSOLE_PORT: 5282
+    ports:
+      # only on this machine; the reverse proxy connects here
+      - "127.0.0.1:5280:5280"
+      # admin console — never publish this to the internet. Open http://127.0.0.1:5282/admin on this machine
+      # (or through an SSH tunnel). Set its password: docker compose exec terminas node server/scripts/console-password.ts
+      - "127.0.0.1:5282:5282"
+    volumes:
+      - terminas-data:/data
+
+volumes:
+  terminas-data:

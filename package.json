@@ -1,0 +1,25 @@
+{
+  "name": "terminas",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "workspaces": [
+    "server",
+    "web",
+    "desktop"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev -w server",
+    "dev:web": "npm run dev -w web",
+    "dev:sshd": "npm run sshd -w server",
+    "build": "npm run build -w web",
+    "start": "npm start -w server",
+    "check": "npm run check -w server && npm run check -w web",
+    "dev": "node scripts/dev.mjs",
+    "dev:desktop": "npm run dev -w desktop",
+    "dist:desktop": "npm run dist -w desktop",
+    "start:prod": "npm run start:prod -w server",
+    "release:desktop": "npm run release -w desktop --",
+    "release:sign": "node desktop/scripts/update-key.mjs sign",
+    "update-key:init": "node desktop/scripts/update-key.mjs init"
+  }
+}

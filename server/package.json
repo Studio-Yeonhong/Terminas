@@ -1,0 +1,30 @@
+{
+  "name": "@terminas/server",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=../.env src/index.ts",
+    "start": "node --env-file-if-exists=../.env src/index.ts",
+    "sshd": "node --env-file-if-exists=../.env dev/test-sshd.ts",
+    "check": "tsc -p tsconfig.json",
+    "start:prod": "node --env-file=../.env.production src/index.ts",
+    "mfa:reset": "node --env-file-if-exists=../.env --env-file-if-exists=../.env.production scripts/mfa-reset.ts",
+    "user:password": "node --env-file-if-exists=../.env --env-file-if-exists=../.env.production scripts/user-password.ts",
+    "console:password": "node --env-file-if-exists=../.env --env-file-if-exists=../.env.production scripts/console-password.ts"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.1.2",
+    "@fastify/static": "^10.1.5",
+    "@fastify/websocket": "^11.3.1",
+    "fastify": "^5.12.5",
+    "jose": "^6.2.12",
+    "ssh2": "^1.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/ssh2": "^1.15.6",
+    "@types/ws": "^8.18.1",
+    "typescript": "^7.0.2"
+  }
+}

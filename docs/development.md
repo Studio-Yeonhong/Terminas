@@ -36,7 +36,7 @@ npm workspaces: `server`, `web`, `desktop`.
 | `web/scripts/i18n-check.mjs` | Translation checker. |
 | `desktop/` | The Electron app. |
 | `desktop/src/` | `main.js` (window, IPC, server picker, sign-in, updates), `ssh.js` (direct SSH, SFTP, port forwarding), `http.js` (HTTP tool), `update-verify.js` (update signature check), `i18n-main.js` (main-process text), `setup.html` (server picker page). |
-| `desktop/app-config.json` | Built-in server address (`serverUrl`) and update feeds (`updateUrl`, then `updateFallbackUrl`). |
+| `desktop/app-config.json` | Built-in server address (`serverUrl`) and update feeds (`updateUrl` and `betaUpdateUrl`, both GitHub Releases; optional `updateFallbackUrl` and `betaFallbackUrl` for your own builds). |
 | `desktop/update-keys.json` | Public keys that update installers must be signed with. |
 | `desktop/scripts/` | `release.mjs`, `update-key.mjs` (signing), `publish.mjs`, `icon.mjs`. |
 | `security-review/` | Verification scripts for security-sensitive behavior (see [Checks](#checks)). |
@@ -133,6 +133,9 @@ Changes to security-sensitive areas should also run the matching scripts in `sec
 | `node security-review/verify-http-ui.mjs` | The HTTP tool in the real app window (dev Electron driven over the DevTools protocol) against a local test server: request tabs, params table, auto headers, what the server actually receives, cookies, history, API key, form body, saving, closing unsaved tabs. Builds the UI into a temporary folder; opens a window. |
 | `node security-review/verify-offline.mjs` | Offline mode with the real vault layer (`web/src/vault.ts`, `offline.ts`) on a fake desktop bridge and two simulated devices: offline edits survive a restart, uploads on reconnect, conflict copies, kept deletes, restored items, the offline log queue, personal sync off/on (with and without emptying the server copy), team copies expiring 7 days after the last sync (on disk and in memory), clock rollback, the team period not being a server setting, dropping team copies on removal or 401, temporary mode. |
 | `node security-review/verify-offline-ui.mjs` | The same in the real app window (dev Electron with the built UI, driven over the DevTools protocol): offline start from the copy, adding a host offline, read-only team vault, upload after reconnect, settings pages, temporary mode. Builds the UI into a temporary folder (never `web/dist`, which the running server serves); opens windows. |
+| `node security-review/verify-server-hardening.mjs` | Server fixes from the second security review (September 29, 2026): CSRF also for percent-encoded paths and empty bearer tokens; sign-in limits hold against a burst of simultaneous attempts; invitations must be accepted, ID/password accounts need the invite code, admin emails cannot be created with invite codes; the key-change proof stored only as a hash (old plain values converted at startup); demoted admins lose extra vault grants; team-management logs and last-sign-in times only for team managers; turning on 2FA only within 10 minutes of sign-in; the 16 MB vault limit; client log floods dropped; re-sealing one's own vault key. |
+| `node security-review/verify-e2ee-hardening.mjs` | Vault-key origin and rollback with the real vault layer and a server that tampers with its database: new and shared vault keys sealed with the sender's key; keys of unknown origin not opened silently on a new device, re-sealed after confirmation; swapped keys, a personal vault key sealed by someone else, and a sharer whose public key changed are refused; a fresh account refuses a pre-filled personal vault key; older item versions and resurrected deleted items hidden (and accepted on request); personal credentials not sent to a shared host whose address changed. |
+| `node security-review/verify-public-review.mjs` | Findings of the pre-release review (OS-01 to OS-07): the admin console refuses percent-encoded paths without a session (read and write) while its public routes stay open; a burst of console sign-ins checks the password at most 5 times; request logs drop query strings; password sign-in re-reads the account after hashing; SFTP file reads stop at the real number of bytes received (web and app); the web SFTP client closes on an oversized packet length; app folder downloads refuse existing junctions and use random, exclusively created temporary files. |
 | `node security-review/verify-update-signing.mjs` | `update-key:init` and `release:sign` in a real pseudo-terminal with a throwaway key and a fake build. Restores `desktop/update-keys.json` when done. |
 | `RESULT_FILE=<file> node_modules/electron/dist/electron.exe security-review/verify-updater-electron.mjs` | The real `electron-updater` inside Electron with the app's signature check: valid update, swapped installer, unsigned, unknown key, inflated version, cache clearing. Nothing is installed. |
 | `node security-review/verify-app-hardening.mjs` | Launches the built app (`desktop/release/win-unpacked`, so build first) with a throwaway profile: blocked debug and certificate switches, `--inspect`, `NODE_OPTIONS`, `ELECTRON_RUN_AS_NODE`, and tampering with `app.asar` or adding an `app` folder. Windows appear briefly. |
@@ -185,26 +188,25 @@ Raise `ITEM_FORMAT` and extend `formatNeeded()` whenever a new value would be lo
 
 ### Beta channel
 
-Versions with a pre-release tag (`0.4.0-beta.1`) are beta versions. The desktop app offers **Settings → Account → Desktop app → Get beta versions** (with a stability warning). Beta users read a separate feed: `betaUpdateUrl` in `desktop/app-config.json` (the fixed GitHub release tagged `beta`), then `betaFallbackUrl` (`/updates/beta` on the official server). Stable users never see beta files, because GitHub's `releases/latest` skips pre-releases.
+Versions with a pre-release tag (`0.4.0-beta.1`) are beta versions. The desktop app offers **Settings → Account → Desktop app → Get beta versions** (with a stability warning). Beta users read a separate feed: `betaUpdateUrl` in `desktop/app-config.json` (the fixed GitHub release tagged `beta`). Stable users never see beta files, because GitHub's `releases/latest` skips pre-releases. An app installed from a beta version starts on the beta channel until the person chooses otherwise.
 
-- `npm run release:sign` publishes a beta version only to `<updates>/beta`, and a stable version to `<updates>` and also to `<updates>/beta` when it is newer than the beta there, so beta users get stable releases too.
+- `npm run release:sign` only signs the build. With `--to <folder>` or `TERMINAS_UPDATES_DIR` it also copies the files into a server's `/updates` folder (a beta version only into `<updates>/beta`, a stable version into `<updates>` and, when it is newer than the beta there, into `<updates>/beta` too) — for self-hosted feeds; the official app is published on GitHub only.
 - `internal/github-publish.mjs release` marks beta versions as pre-releases and keeps the `beta` release's files at the newest beta or newer stable version.
 - The signature check is the same for both channels. Version order follows semver (`0.4.0-beta.1 < 0.4.0-beta.2 < 0.4.0`), and the app never installs an older version, so leaving the beta keeps the current beta until the next stable release is newer.
 - Builds use `"detectUpdateChannel": false`, so beta builds also produce `latest.yml`; the channel is decided by where the files are published.
 
 ## Releasing your own desktop builds
 
-The official app takes updates only from the official feeds and installs only installers signed with the official key. It checks the feeds in `desktop/app-config.json` in order and uses the first one that answers:
+The official app takes updates only from GitHub Releases and installs only installers signed with the official key:
 
-1. `updateUrl` — GitHub Releases, `https://github.com/Studio-Yeonhong/Terminas/releases/latest/download`.
-2. `updateFallbackUrl` — the official server's `/updates`, used when GitHub cannot be reached or has no release yet.
-3. `<serverUrl>/updates` of the built-in server, if it is not already in the list.
+1. Stable channel: `updateUrl` — `https://github.com/Studio-Yeonhong/Terminas/releases/latest/download`.
+2. Beta channel: `betaUpdateUrl` — `https://github.com/Studio-Yeonhong/Terminas/releases/download/beta`.
 
-Errors from a feed that is followed by another one are only written to the app's `updater.log`; the user sees an error only when the last feed fails. Installers must carry a valid signature whichever feed they come from.
+A build may list further feeds in `updateFallbackUrl` / `betaFallbackUrl`; they are checked in order after the first one, and errors from a feed that is followed by another one are only written to the app's `updater.log`. A feed without a release yet (HTTP 404) counts as "no new version". Installers must carry a valid signature whichever feed they come from.
 
 If you ship your own builds (a fork, or an internal build pointing at your server), set up your own identity first:
 
-1. `desktop/app-config.json`: set `serverUrl` to your server (or leave it empty, and the app asks for a server address on first run), and set **both** `updateUrl` and `updateFallbackUrl` to your own update feeds (or remove `updateFallbackUrl`). Otherwise your build keeps asking the official feeds, which it cannot install from once your own key replaces the official one.
+1. `desktop/app-config.json`: set `serverUrl` to your server (or leave it empty, and the app asks for a server address on first run), and set `updateUrl` and `betaUpdateUrl` (and any fallback feeds) to your own update feeds. Otherwise your build keeps asking the official feeds, which it cannot install from once your own key replaces the official one.
 2. Use your own app ID: `build.appId` in `desktop/package.json`, `APP_ID` in `desktop/src/update-verify.js` and `setAppUserModelId` in `desktop/src/main.js`. Also change the `publish` URL in `desktop/package.json`.
 3. Create your signing key once, from a terminal in the repository:
 

@@ -229,7 +229,8 @@ All settings are environment variables, normally kept in `.env` (see `.env.examp
 | `SHELL_PUBLIC_URL` | `http://localhost:5380` | The address people open in the browser — `https://...` in production. Session cookies are marked `Secure` when it is https, API requests and relay WebSockets must come from this origin, the Google redirect URI is `<SHELL_PUBLIC_URL>/api/auth/google/callback`, and HSTS is sent when it is https. It must match what users type exactly (scheme, host and port). |
 | `SHELL_HOST` | `127.0.0.1` | Interface to listen on. Docker: fixed to `0.0.0.0` inside the container. |
 | `SHELL_PORT` | `5381` | Port to listen on. Docker: fixed to `5280`. |
-| `SHELL_TRUST_PROXY` | `0` | `1` only when a reverse proxy or tunnel sits in front, so the client IP is taken from `X-Forwarded-For`. Docker: fixed to `1` (the port is published only on `127.0.0.1`). |
+| `SHELL_TRUST_PROXY` | `0` | `1` only when a reverse proxy or tunnel sits in front. The server then trusts proxies on the same machine or a private network (loopback, link-local, `10/8`, `172.16/12`, `192.168/16`, `fc00::/7`) and takes the client IP from the right-most `X-Forwarded-For` entry that such a proxy added — addresses a client writes into the header itself are ignored. You can also give the proxies' addresses or CIDRs (comma-separated). Docker: fixed to `1` (the port is published only on `127.0.0.1`). |
+| `SHELL_RELAY_PRIVATE` | `all`, or `admins` with open sign-up | Who may open **web** SSH sessions to private-network addresses around the server (`10/8`, `172.16/12`, `192.168/16`, `100.64/10`, `198.18/15`, `fc00::/7`): `all`, `admins` (server admins only) or `none`. The desktop app connects directly and is not affected. |
 
 ### Sign-in: Google
 
@@ -251,6 +252,7 @@ All settings are environment variables, normally kept in `.env` (see `.env.examp
 
 | Variable | Default | Meaning |
 |---|---|---|
+| `SHELL_AUDIT_RETENTION_DAYS` | `365` | Log entries older than this many days are deleted (checked every 6 hours). `0` keeps them forever. |
 | `SHELL_OPEN_SIGNUP` | `0` | `1` lets anyone sign up with Google (verified email) without an invite; people without a team can still use their personal vault, and anyone can create teams. `0` keeps the server invite-only. There is no self sign-up with ID/password. See [Open sign-up](#open-sign-up). |
 | `SHELL_TERMS_URL` | empty | Your terms of service. When set, shown as a link on the sign-in screen and in **Settings → Account**. |
 | `SHELL_PRIVACY_URL` | empty | Your privacy policy, shown the same way. |
@@ -359,7 +361,7 @@ Before opening a server to the public:
 
 - **Publish the Google OAuth consent screen** (**In production**, see [Google sign-in setup](#google-sign-in-setup)). While it is in **Testing**, only the listed test users can sign in.
 - **Publish terms of service and a privacy policy** and set `SHELL_TERMS_URL` and `SHELL_PRIVACY_URL`. They appear as links on the sign-in screen and in **Settings → Account**.
-- **Think about what the relay can reach.** Every signed-in user can open web SSH connections to any address the server can reach that answers with an SSH greeting (see [Security notes](#security-notes)).
+- **Think about what the relay can reach.** Every signed-in user can open web SSH connections to any address the server can reach that answers with an SSH greeting. With open sign-up, private-network addresses around the server are limited to server admins by default (`SHELL_RELAY_PRIVATE=admins`, see [Security notes](#security-notes)).
 - If you changed the server code, set `SHELL_SOURCE_URL` to your modified source ([License](../README.md#license)).
 
 ## The first server admin
@@ -399,18 +401,20 @@ Everyone also has a **Personal** vault that only they can open. The server enfor
 
 Open **Settings → (team) → Invite**, enter the email and role, and click **Invite**. Only owners can invite admins.
 
-- **The person already has an account on this server:** they are added to the team immediately.
-- **Google sign-in:** the invite is stored and accepted automatically the first time that person signs in with Google using that email.
-- **ID/password sign-in:** you are shown a **one-time invite code** (`XXXX-XXXX-XXXX`) together with its expiry. Give it to the person through a channel you trust.
+- **Nobody is added without agreeing.** The invite is stored as pending. The person sees it after signing in (a bar at the top of the vault screen) and accepts or declines it. The answer you get is the same whether or not the address already has an account.
+- **Google sign-in:** on an invite-only server, a person who signs in for the very first time joins the teams that invited them automatically (the invite is what lets them in). Everyone else — existing accounts, and new accounts on an [open sign-up](#open-sign-up) server — accepts in the app.
+- **ID/password sign-in:** you are shown a **one-time invite code** (`XXXX-XXXX-XXXX`) together with its expiry. Give it to the person through a channel you trust. People who sign in with an ID and password need this code both to sign up and to accept an invite to another team, because their email address was never verified.
   - The code is valid for **7 days** and is shown **only once**. The server stores only its hash.
   - Lost or expired? Use **Generate new invite code** next to the pending invite. The old code stops working.
   - You can cancel a pending invite at any time.
 
-The invited person then opens the sign-in screen, chooses **Got an invite code? Sign up**, enters the invited email, the code, an optional name and a sign-in password (10+ characters). They are signed in and join the team. On a server with both methods, they can instead just sign in with Google using the invited email.
+The invited person then opens the sign-in screen, chooses **Got an invite code? Sign up**, enters the invited email, the code, an optional name and a sign-in password (10+ characters). They are signed in and join the team. On a server with both methods, they can instead sign in with Google using the invited email — but an account created with an ID and password is never linked to Google afterwards (Google sign-in with that address is refused), so pick one method per person. Invite codes cannot create the accounts in `SHELL_BOOTSTRAP_ADMINS` or `SHELL_ADMIN_ID`. Each person can send at most 100 invites a day.
 
 ### Sharing vault keys
 
-Being in a team is not enough to read its vaults. After a new member sets up their encryption password, team owners and admins see **"Team members waiting for vault keys"** when they open the app or web UI. Check the person's email and **key fingerprint** (ideally compare the fingerprint with them by voice or in person), then confirm. Your client seals the vault key to their public key. If a member's key differs from the one your device saw before, it is marked as changed and not selected by default.
+Being in a team is not enough to read its vaults. After a new member sets up their encryption password, team owners and admins see **"Team members waiting for vault keys"** when they open the app or web UI. Check the person's email and **key fingerprint** (ideally compare the fingerprint with them by voice or in person), then confirm. Your client seals the vault key to their public key with your own key, so their app can tell the key came from you. Only people whose key your device has seen before are selected by default; tick new people after checking their fingerprint. If a member's key differs from the one your device saw before, it is marked as changed.
+
+Vault keys shared by apps up to 0.3.2 do not say who sealed them. A member's app that has opened such a key before simply re-seals it with its own key; on a device that has never seen it, the app asks before opening the vault. If you are asked about a vault that was never shared with you, do not open it and tell your team admin.
 
 ### Removing people and deleting teams
 
@@ -654,7 +658,7 @@ Recommendations:
 - **Keep `SHELL_DEV_LOGIN=0`.** It lets anyone sign in with just an email. The server refuses to start with it unless it is on localhost outside production.
 - **Set `SHELL_TRUST_PROXY=1` only behind a proxy.** Without a proxy, clients could fake `X-Forwarded-For` to dodge per-IP limits and forge the IPs in the logs. Docker Compose sets it to `1` because the port is published only on `127.0.0.1`; if you publish the port elsewhere, change that.
 - **Run with `NODE_ENV=production`** (the Docker image does). It enables the relay's block list for the server's own loopback, link-local and interface addresses.
-- **Mind what the relay can reach.** Signed-in users can open web SSH sessions to any address the server can reach that answers with an SSH greeting — including private networks around the server. Place the server, or restrict its outgoing traffic, accordingly. This matters most with [open sign-up](#open-sign-up), where anyone with a Google account can sign in.
+- **Mind what the relay can reach.** Signed-in users can open web SSH sessions to any address the server can reach that answers with an SSH greeting. Private-network addresses (`10/8`, `172.16/12`, `192.168/16`, `100.64/10`, `198.18/15`, `fc00::/7`) follow `SHELL_RELAY_PRIVATE`: `all` by default, `admins` by default with [open sign-up](#open-sign-up), where anyone with a Google account can sign in. Public addresses the server can reach — including its own public IP through the router — stay open to everyone, so place the server, or restrict its outgoing traffic, accordingly.
 - **Keep invite-only unless you mean to run a public service.** `SHELL_OPEN_SIGNUP` is `0` by default. If you turn it on, publish terms of service and a privacy policy and keep an eye on the [admin console](#admin-console).
 - **Keep the admin console on the server machine.** Never publish its port (5282) or route it through the reverse proxy; reach it through an SSH tunnel or remote desktop. Use a long console password and turn on its OTP (`console:password -- --otp`).
 - **Protect `.env` and the data directory** (`chmod 600 .env`). Remove `SHELL_ADMIN_PASSWORD` after the first start.
@@ -685,6 +689,7 @@ Server log and command-line messages are currently in Korean.
 | Web SSH fails immediately; the browser shows WebSocket errors | The proxy does not pass WebSocket upgrades for `/api/relay`. |
 | "Not an SSH server (no greeting received)." | The target did not send an SSH greeting within 10 seconds. Check the host and port. |
 | "Can't connect to that address." | The relay blocks the server's own loopback and interface addresses. Use the desktop app for that host. |
+| "This server doesn't allow web connections to internal network addresses." | The host is on a private network and `SHELL_RELAY_PRIVATE` does not allow it for this account (with open sign-up only server admins may). Use the desktop app, or change the setting. |
 | Web SSH fails during key exchange | The browser SSH client does not offer curve25519. The SSH server must allow ECDH (`ecdh-sha2-nistp256/384/521`) or Diffie-Hellman key exchange; OpenSSH's defaults do. |
 | After an upgrade the web UI is blank or assets return 404 | Restart the server after rebuilding the web UI. |
 | "Too many failed attempts, so sign-in is temporarily blocked." | Wait 15 minutes. The counters are kept in memory and also reset when the server restarts. |

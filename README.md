@@ -57,11 +57,11 @@ Read the full design, including known limitations, in [docs/security-model.md](d
 
 ## Getting the app
 
-1. Download the Windows installer (`Terminas-Setup-x.y.z.exe`) from [GitHub Releases](https://github.com/Studio-Yeonhong/Terminas/releases).
+1. Download the Windows installer (`Terminas-Setup-x.y.z.exe`) from [GitHub Releases](https://github.com/Studio-Yeonhong/Terminas/releases). Terminas is currently in **public beta** (1.0.0-beta); an app installed from a beta version keeps receiving beta updates.
 2. Run it. The installer is not Windows code-signed yet, so SmartScreen may warn on first run (**More info → Run anyway**). Updates are verified separately with the project's own signature.
 3. The app updates itself: it checks shortly after start and every 4 hours, downloads new versions in the background and offers an **Update to x.y.z** button. Nothing is installed until you click it and confirm. To try features early, turn on **Settings → Account → Get beta versions** (betas may be unstable).
 
-On first start the app asks which server to use: the **official server** (`https://terminas.yeonhong.studio`, preselected) or a **self-hosted server** (enter its domain or IP address). You can switch later with **Change** next to the server name on the sign-in screen, **Help → Change server address…**, or **Settings → Account → Connected server**. Updates always come from the official update feed — GitHub Releases first, then the official server as a fallback — whichever server you use, and they install only with the project's Ed25519 signature.
+On first start the app asks which server to use: the **official server** (`https://terminas.yeonhong.studio`, preselected) or a **self-hosted server** (enter its domain or IP address). You can switch later with **Change** next to the server name on the sign-in screen, **Help → Change server address…**, or **Settings → Account → Connected server**. Updates always come from GitHub Releases, whichever server you use, and they install only with the project's Ed25519 signature.
 
 ## Self-hosting quick start (Docker)
 

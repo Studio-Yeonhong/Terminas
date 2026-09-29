@@ -1,0 +1,254 @@
+:root {
+  color-scheme: dark;
+  --bg: #151925;
+  --panel: #1b2030;
+  --card: #232939;
+  --card-hover: #2b3246;
+  --input: #121620;
+  --line: #2b3245;
+  --text: #e7eaf3;
+  --text-2: #a9b0c4;
+  --text-3: #6e7790;
+  --accent: #4c8dff;
+  --ok: #3ecf8e;
+  --warn: #f2b84b;
+  --danger: #f0616d;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 'Segoe UI', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+}
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+h1 {
+  margin: 0;
+  font-size: 20px;
+}
+.muted {
+  color: var(--text-2);
+}
+.small {
+  font-size: 12.5px;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.spacer {
+  flex: 1;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge.accent {
+  background: rgba(76, 141, 255, 0.16);
+  color: var(--accent);
+}
+.badge.danger {
+  background: rgba(240, 97, 109, 0.14);
+  color: var(--danger);
+}
+.badge.warn {
+  background: rgba(242, 184, 75, 0.14);
+  color: var(--warn);
+}
+.badge.ok {
+  background: rgba(62, 207, 142, 0.14);
+  color: var(--ok);
+}
+button,
+select,
+input {
+  font: inherit;
+  color: var(--text);
+}
+button {
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--card);
+  cursor: pointer;
+  font-weight: 600;
+}
+button:hover {
+  background: var(--card-hover);
+}
+button.primary {
+  background: var(--accent);
+  color: #fff;
+}
+button.danger {
+  color: var(--danger);
+}
+button.small {
+  height: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+input,
+select {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--input);
+  outline: none;
+}
+input:focus,
+select:focus {
+  border-color: var(--accent);
+}
+.card {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.login {
+  max-width: 380px;
+  margin: 12vh auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.login input,
+.login button {
+  width: 100%;
+  height: 40px;
+}
+.error {
+  min-height: 1em;
+  margin: 0;
+  color: #ff8d97;
+  font-size: 13px;
+}
+code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--input);
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  font-size: 12.5px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.stat {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--card);
+}
+.stat b {
+  display: block;
+  font-size: 20px;
+}
+.tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: var(--card);
+}
+.tabs button {
+  height: 28px;
+  background: transparent;
+  color: var(--text-3);
+}
+.tabs button.on {
+  background: var(--card-hover);
+  color: var(--text);
+}
+.toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.toolbar input {
+  flex: 1;
+  min-width: 200px;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th {
+  padding: 8px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+td {
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+tr.disabled td {
+  opacity: 0.55;
+}
+td .badges,
+td .actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.more {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+.toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  max-width: 420px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--card-hover);
+  border-left: 3px solid var(--ok);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+.toast.error {
+  border-left-color: var(--danger);
+}
+.foot {
+  margin-top: 20px;
+}

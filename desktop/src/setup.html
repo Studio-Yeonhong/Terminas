@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:" />
+    <title>Terminas</title>
+    <link rel="stylesheet" href="pages.css" />
+  </head>
+  <body>
+    <main class="card">
+      <img src="../build/icon.png" alt="" width="56" height="56" />
+      <h1>Terminas</h1>
+      <p class="sub" id="sub"></p>
+      <form id="form">
+        <!-- 공식 서버 / 직접 운영하는 서버 (공식 서버가 정해져 있지 않은 빌드면 직접 운영만) -->
+        <div class="choices" id="choices" role="radiogroup">
+          <label class="choice" id="official-choice">
+            <input type="radio" name="kind" value="official" />
+            <span class="choice-text">
+              <span class="choice-title" id="official-title"></span>
+              <span class="choice-sub" id="official-sub"></span>
+            </span>
+          </label>
+          <label class="choice" id="custom-choice">
+            <input type="radio" name="kind" value="custom" />
+            <span class="choice-text">
+              <span class="choice-title" id="custom-title"></span>
+              <span class="choice-sub" id="custom-sub"></span>
+            </span>
+          </label>
+        </div>
+        <input id="url" type="text" placeholder="shell.example.com" autocomplete="off" spellcheck="false" />
+        <p id="warn" class="warn" role="status"></p>
+        <button type="submit" id="save"></button>
+      </form>
+      <p id="error" class="error" role="alert"></p>
+      <p class="foot" id="foot"></p>
+    </main>
+    <script>
+      const form = document.getElementById('form');
+      const input = document.getElementById('url');
+      const button = document.getElementById('save');
+      const error = document.getElementById('error');
+      const warn = document.getElementById('warn');
+      const radios = [...document.querySelectorAll('input[name=kind]')];
+      // 글은 앱 본체가 지금 언어로 준다 (desktop/src/i18n-main.js)
+      let texts = { connect: 'Connect', checking: '…' };
+      let official = '';
+      const kind = () => radios.find((r) => r.checked)?.value ?? 'custom';
+      const host = (url) => {
+        try {
+          return new URL(url).host;
+        } catch {
+          return url;
+        }
+      };
+
+      function render() {
+        const custom = kind() === 'custom';
+        document.getElementById('official-choice').classList.toggle('on', !custom);
+        document.getElementById('custom-choice').classList.toggle('on', custom);
+        input.classList.toggle('hidden', !custom);
+        input.required = custom;
+        if (custom) void preview();
+        else warn.textContent = '';
+      }
+
+      // http(암호화 안 됨)로 붙는 주소면 미리 알려 준다
+      let seq = 0;
+      async function preview() {
+        const mine = ++seq;
+        const value = input.value.trim();
+        if (!value) return (warn.textContent = '');
+        const r = await window.studioSetup.preview(value).catch(() => null);
+        if (mine !== seq || !r) return;
+        warn.textContent = r.origin.startsWith('http://') && !/^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|$)/.test(r.origin) ? texts.httpWarn ?? '' : '';
+      }
+
+      window.studioSetup.get().then((c) => {
+        texts = c.texts ?? texts;
+        official = c.official || '';
+        document.documentElement.lang = texts.lang ?? 'en';
+        document.getElementById('sub').textContent = texts.sub ?? '';
+        document.getElementById('foot').textContent = texts.foot ?? '';
+        document.getElementById('official-title').textContent = texts.official ?? 'Official server';
+        document.getElementById('official-sub').textContent = host(official);
+        document.getElementById('custom-title').textContent = texts.custom ?? 'Self-hosted server';
+        document.getElementById('custom-sub').textContent = texts.customSub ?? '';
+        button.textContent = texts.connect;
+        const current = c.serverUrl || '';
+        if (!official) {
+          // 공식 서버가 없는 빌드: 주소 입력만
+          document.getElementById('choices').classList.add('hidden');
+          radios[1].checked = true;
+        } else {
+          radios[current && current !== official ? 1 : 0].checked = true;
+        }
+        if (current && current !== official) input.value = current;
+        render();
+        if (kind() === 'custom') input.focus();
+      });
+      radios.forEach((r) => r.addEventListener('change', () => (render(), kind() === 'custom' && input.focus())));
+      input.addEventListener('input', () => void preview());
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        error.textContent = '';
+        const target = kind() === 'official' ? official : input.value;
+        if (!target.trim()) return;
+        button.disabled = true;
+        button.textContent = texts.checking;
+        try {
+          await window.studioSetup.save(target);
+        } catch (err) {
+          error.textContent = String(err.message || err);
+          button.disabled = false;
+          button.textContent = texts.connect;
+        }
+      });
+    </script>
+  </body>
+</html>

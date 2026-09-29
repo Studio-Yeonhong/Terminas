@@ -1,0 +1,14 @@
+node_modules/
+web/dist/
+data/
+.env
+*.log
+desktop/release/
+data-prod/
+.env.production
+
+# 앱 업데이트 서명 키(비밀번호로 잠긴 것이라도) 는 저장소에 두지 않는다
+*update-signing-key*.json
+
+# 번역 키 목록을 사람이 손볼 때 쓰는 사본 (_keys_1.json 등)
+web/src/locales/_keys_*.json

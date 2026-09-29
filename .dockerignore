@@ -1,0 +1,12 @@
+**/node_modules
+web/dist
+desktop/release
+data
+data-*
+.env
+.env.*
+!.env.example
+*.log
+.git
+security-review
+internal
